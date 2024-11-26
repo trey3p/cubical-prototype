@@ -1,0 +1,41 @@
+axiom Bot : Type 0
+
+(* ex falso quodlibet - principle of explosion *)
+def explosion := fun (l : Int) (C : Type l) (b : Bot) => b : Pi (l : Int) (C : Type l), (Bot -> C)
+
+(* negation - paramaterized by universe level *)
+def ( ~ ) := fun (l : Int) (C : Type l) => C -> Bot
+
+(* the law of excluded middle - parameterized by universe level *)
+def lem := fun (l : Int) (A : Type l) => Sum(A, (~ l A))
+
+(* the double negation of the law of excluded middle - parameterized by universe level *)
+def dbl_neg_lem := fun (l : Int) (A : Type l) => ~ l (~ l (lem l A))
+synth dbl_neg_lem
+
+axiom l : Int
+axiom A : Type l
+
+
+eval ~ l (Sum(A , (~ l A)))
+
+(* ~ (A v ~ A) *)
+axiom h : ~ l (Sum(A , (~ l A)))
+axiom y : A
+
+(* (inl a) : A v ~ A *)
+check (inl y) : Sum(A, ~l A)
+
+check h (inl y) : Bot
+check (fun (y : A) => h (inl y)) : A -> Bot
+
+(* (inr (fun (y : A) => h (inl y))) : A v ~ A *)
+check (inr (fun (y : A) => h (inl y))) : Sum(A, A -> Bot)
+
+check h (inr (fun (y : A) => h (inl y))) : Bot
+
+synth h (inr (fun (y : A) => h (inl y)))
+
+(* ~ ~ (A v ~ A) *)
+def f := fun (h : ~ l (Sum(A , (~ l A))) ) =>  h (inr (fun (y : A) => h (inl y)))
+synth f

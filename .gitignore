@@ -1,0 +1,17 @@
+.DS_store
+.idea
+*.log
+tmp/
+
+-- Dune/Ocaml Files
+*.opam
+bin/
+_build/
+cubtype.exe
+
+-- LaTeX Files
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.auctex-auto/
