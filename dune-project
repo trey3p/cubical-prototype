@@ -16,7 +16,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name deptype)
+ (name cubtype)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends ocaml dune)

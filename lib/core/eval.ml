@@ -140,7 +140,7 @@ and neutral_norm (context : ctx) (p : expr) : expr * expr =
   | OutB p' ->
     let (p'', t) = neutral_norm context p' in
     (match t with
-     | Bound(ty, _) -> ((OutB p''), ty)
+     | Bound(ty, _, _) -> ((OutB p''), ty)
      | _ -> raise NOT_NEUTRAL
     )
 
@@ -178,10 +178,10 @@ and neutral_norm (context : ctx) (p : expr) : expr * expr =
             J((z, k'), (x, y, q, c'), p''), c_p'
           | _ -> raise NOT_NEUTRAL
         )
-  | Bound(a, sys) ->
+  | Bound(a, cof, t) ->
     let a', ty = neutral_norm context a in
-    let sys' = apply_neutral_system context (sys) in
-    Bound(a', sys'), ty (* apply term_norm instead? *)
+    let t', _ = neutral_norm context t in
+    Bound(a', cof, t'), ty (* apply term_norm instead? *)
 
   | Pi(x, t1, t2) ->
     let t1', u1 = neutral_norm context t1 in
@@ -212,18 +212,3 @@ and neutral_norm (context : ctx) (p : expr) : expr * expr =
     let t', u = neutral_norm (quantify_cof context x) t in CMapT(x, t'), u
 
   | _ -> (p, Type (max_int)) (* q here *)
-
-  and apply_neutral_system (context : ctx) (sys : system list) : system list =
-  match sys with
-  | [] -> []
-  | m::ms ->
-    let a, t = m.cofibration, m.expression in
-    (Ast.mk_sys a (fst(neutral_norm context t)))::(apply_neutral_system context ms)
-
-
-let rec apply_eval_system (context : ctx) (ty : expr) (sys : system list) : system list =
-  match sys with
-  | [] -> []
-  | m::ms ->
-    let a, t = m.cofibration, m.expression in
-    (Ast.mk_sys a (term_norm context ty t))::(apply_eval_system context ty ms)

@@ -35,9 +35,9 @@ and expr' =
   | InP of Cof.cofib * expr (* In_alpha(e) : [alpha] -> A *)
   | OutB of expr
   | OutP of expr
-  | Bound of expr * system list (* A type, phi : cofib , t : [alpha] -> A *) (* A[phi -> t] *)
-  | InB of expr * system list * expr (* in_A_t(a) : A[phi -> t] *)
-  | Branch of system list
+  | Bound of expr * cofib * expr (* A type, phi : cofib , t : [alpha] -> A *) (* A[phi -> t] *)
+  | InB of expr * cofib * expr * expr (* in_A_t(a) : A[phi -> t] *)
+  | Branch of cofib * cofib * expr * expr
   | Uip of expr * expr * variable * expr
   | CMapT of variable * expr (* (x : Cof ) -> A(x) *)
   | CMap of variable * expr

@@ -92,7 +92,7 @@ let print_cofib e ppf =
 
 
  (** [expr e ppf] prints (beautified) expression [e] using formatter [ppf]. *)
-let rec print_expr e ppf =
+let print_expr e ppf =
   let rec print_expr ?max_level e ppf =  expr'?max_level e ppf
   and expr' ?max_level e ppf =
     let print ?at_level = print ?max_level ?at_level ppf in
@@ -125,27 +125,12 @@ let rec print_expr e ppf =
         | Partial(alpha, t) -> print ~at_level:3 "[%t] -> %t" (print_cofib alpha) (print_expr t)
         | InP(_, e) -> print ~at_level:3 "inp(%t)" (print_expr ~max_level:4 e)
         | OutP(e1) | OutB(e1) -> print ~at_level:3 "out(%t)" (print_expr ~max_level:4 e1)
-        | Bound(t1, sys) -> print ~at_level:3 "%t[ %t ]" (print_expr t1) (print_sys sys)
-        | InB(_, _, e3) -> print ~at_level:3 "inb(%t)" (print_expr e3)
-        | Branch sys-> print ~at_level:3 "[%t]" (print_sys sys)
+        | Bound(t1, cof, t) -> print ~at_level:3 "%t[ %t -> %t ]" (print_expr t1) (print_cofib cof) (print_expr t)
+        | InB(_, _, _, e3) -> print ~at_level:3 "inb(%t)" (print_expr e3)
+        | Branch(a, b, t, u) -> print ~at_level:3 "[%t -> %t, %t -> %t]" (print_cofib a) (print_cofib b) (print_expr t) (print_expr u)
         | Uip(_, ty, x, eq) -> print ~at_level:3 "uip_%t(%t, %t)" (print_expr ty) (variable x) (print_expr eq)
   in
     print_expr (Beautify.beautify e) ppf
-
-and print_sys s ppf =
-   let rec print_sys ?max_level s ppf =  sys'?max_level s ppf
-  and sys' ?max_level s ppf =
-    let print ?at_level = print ?max_level ?at_level ppf in
-    match s with
-    | [] -> print ""
-    | m::[] ->
-      let a, t = m.cofibration, m.expression in
-      print ~at_level:3 "%t -> %t"   (print_cofib a) (print_expr t)
-    | m::ms ->
-      let a, t = m.cofibration, m.expression in
-      print ~at_level:3 "%t -> %t, %t"
-      (print_cofib a) (print_expr t) (print_sys ~max_level:4 ms)
-  in print_sys s ppf
 
 let expr' e ppf = print_expr e ppf
 let print2 ppf (e1, e2) = print_expr e1 ppf; print_expr e2 ppf

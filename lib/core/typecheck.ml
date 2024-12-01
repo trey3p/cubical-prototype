@@ -37,7 +37,7 @@ let rec term_equiv (context : ctx) (ty : Ast.expr) (e1 : Ast.expr) (e2 : Ast.exp
    (match ty with
     | Pi (x, t1, t2) -> (term_equiv (extend_context context x t1 None) t2 (App (e1, Var(x))) (App(e2, Var(x)))) (* check types *)
     | Sigma (x, t1, t2) -> (term_equiv context t1 (Fst(e1)) (Fst(e2))) && (term_equiv context (subst [( x, Ex(Fst e1))] t2) (Snd e1) (Snd e2))
-    | Bound(a, _) -> (term_equiv context a (OutB e1) (OutB e2))
+    | Bound(a, _, _) -> (term_equiv context a (OutB e1) (OutB e2))
     | Partial(alpha, t) -> (term_equiv (restrict_context context alpha) t (OutP e1) (OutP e2))
     | IMapT(x, t) ->  (term_equiv (add_dim context x) t (IApp(e1, X x)) (IApp(e2, X x)))
     | CMapT(x, t) -> (term_equiv (quantify_cof context x) t (CApp(e1, Param x)) (CApp(e2, Param x)))
@@ -79,8 +79,8 @@ and neutral_equiv (context : ctx) (p1 : expr)  (p2 : expr) : expr option =
       if Option.is_some(neutral_equiv context m m') && Option.is_some(neutral_equiv context n n')
       then (neutral_equiv context a a') else None
 
-    | Bound(a1, sys1), Bound(a2, sys2) ->
-     if sys_equiv context sys1 sys2
+    | Bound(a1, cof1, t1), Bound(a2, cof2, t2) ->
+     if (Ctx.cof_equiv context cof1 cof2) && Option.is_some(neutral_equiv context t1 t2)
      then (neutral_equiv context a1 a2) else None
 
     | Partial(phi1, t1), Partial(phi2, t2) ->
@@ -125,7 +125,7 @@ and neutral_equiv (context : ctx) (p1 : expr)  (p2 : expr) : expr option =
       let ty = neutral_equiv context p1' p2' in
       (
         match ty with
-        | Some(Bound(a, _)) -> Some(a)
+        | Some(Bound(a, _, _)) -> Some(a)
         | _ -> None
       )
     | OutP(p1'), OutP(p2') ->
@@ -173,13 +173,12 @@ and neutral_equiv (context : ctx) (p1 : expr)  (p2 : expr) : expr option =
        | _ -> None
       )
 
-    | Branch sys1, Branch sys2->
-      let ty1 = neutral_equiv context ((List.hd sys1).expression) ((List.hd sys2).expression) in
-      if sys_equiv context sys1 sys2 then ty1
+    | Branch(a, b, t, u), Branch(c, d, e, f)->
+      let ty1 = neutral_equiv (Ctx.restrict_context context a) t e in
+      let ty2 = neutral_equiv (Ctx.restrict_context context b) u f in
+      if (Option.is_some ty1) && (Option.is_some ty2) && (Ctx.cof_equiv context a c) && (Ctx.cof_equiv context b d)
+      then ty1
       else None
-
-     (* should this be term_equiv? then do i have to synth type? *)
-     (* should i check that ty1 = ty2? kinda seems like asking a diff question *)
 
     | J((z1, m1), (x1, y1, q1, c1), p1),  J((z2, m2), (x2, y2, q2, c2), p2) ->
       let ty = neutral_equiv context p1 p2 in
@@ -195,18 +194,6 @@ and neutral_equiv (context : ctx) (p1 : expr)  (p2 : expr) : expr option =
       )
     | _ -> if p1 = p2 then Some(Type max_int) else None
     )
-
-and sys_equiv (context : ctx) (sys1 : system list) (sys2 : system list) : bool =
-  match sys1, sys2 with
-  | [], [] -> true
-  | [], _ -> false
-  | _, [] -> false
-  | m::ms, x::xs ->
-    let a1, t1 = m.cofibration, m.expression in
-    let a2, t2 = x.cofibration, x.expression in
-    if (cof_equiv context a1 a2) && Option.is_some(neutral_equiv context t1 t2)
-    then sys_equiv context ms xs
-    else false
 
 
 and check_type (context : ctx) (e : expr) (ty : expr) (l : position) : bool =
@@ -368,26 +355,24 @@ and synth ?(l = Nowhere) (context : ctx) (e : expr) : expr =
   | OutB(e1) ->
     let t1 = (synth ~l:l context e1) in
     (match t1 with
-    | Bound(ty, _) -> ty
+    | Bound(ty, _, _) -> ty
     | _ -> error ~loc:l (TypeErr(CannotInferArgument("Out doesn't taken an argument of this type")))
   )
 
-  | Bound(ty, _) ->
+  | Bound(ty, _, _) ->
     (synth ~l:l context ty)
 
-  | InB(ty, sys, a) ->
-    (* let u_ty = (synth ~l:l context a) in *)
-    (* let t = (List.hd sys).expression in *)
-    (* let t_out_ty = (synth ~l:l context (OutB e)) in *)
+  | InB(ty, cof, t, a) ->
     let ty' = (term_norm context (Type max_int) ty) in
-    let sys' = (apply_eval_system context ty' sys) in
-    let f m = term_equiv (restrict_context context m.cofibration) ty m.expression a in
-    let check_agree = (List.for_all f sys) in
-    if check_agree then
-    Bound(ty', sys') else raise (error ~loc:l (TypeErr(BoundaryDisagreement(a))))
+    if (term_equiv (restrict_context context cof) ty t a) then
+    Bound(ty', cof, t) else raise (error ~loc:l (TypeErr(BoundaryDisagreement(a))))
 
-  | Branch sys ->
-    infer_system context sys
+  | Branch(a, b, t, u) ->
+    let ty_t = (synth (restrict_context context a) t) in
+    let ty_u = (synth (restrict_context context b) u) in
+    if (term_equiv (restrict_context (restrict_context context a) b) (Type max_int) ty_t ty_u)
+    then ty_t
+    else raise (error ~loc:l (TypeErr(BoundaryDisagreement(t))))
 
   | CMapT(x, t1) ->
     let nctx = (quantify_cof context x) in (synth ~l:l nctx t1)
@@ -438,16 +423,6 @@ and synth ?(l = Nowhere) (context : ctx) (e : expr) : expr =
      | CMapT(x, t1) -> (x, t1)
      | _ -> raise TYPE_ERROR_CMAP
     )
-  and infer_system (context : ctx) (sys : system list) : expr =
-    match sys with
-    | [] -> raise EMPTY_SYSTEM
-    | m::[] -> synth context m.expression
-    | m::ms ->
-      let ty = (infer_system context ms) in
-      let _, t = m.cofibration, m.expression in
-      let ty_t = synth context t in
-      if term_equiv context (Type max_int) ty ty_t then ty else raise TYPE_ERROR_SYS
-
 
 
 let check_type_exists (context : ctx) (ty : expr) (l : position) : bool =

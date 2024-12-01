@@ -87,9 +87,9 @@ let rec convert_parse_abstract (e : CSyntax.expr') : expr =
   | InP(alpha, a) -> InP(alpha, f a)
   | OutP(e1) -> OutP(f e1)
   | OutB(e1) -> OutB(f e1)
-  | Bound(ty, sys) -> Bound(f ty, convert_sys sys)
-  | InB(ty, sys, a) -> InB(f ty, convert_sys sys, f a)
-  | Branch(sys) -> Branch (convert_sys sys)
+  | Bound(ty, cof, t) -> Bound(f ty, cof, f t)
+  | InB(ty, cof, t, a) -> InB(f ty, cof, f t, f a)
+  | Branch(a, b, t, u) -> Branch (a, b, f t, f u)
   | Uip(uni, ty, x, eq) -> Uip(f uni, f ty, x, f eq)
   | IApp(e1, e2) -> IApp(f e1, e2)
   | CMap(x, e1) -> CMap(x, f e1)
@@ -98,14 +98,6 @@ let rec convert_parse_abstract (e : CSyntax.expr') : expr =
   and convert_abs (a : CSyntax.abstraction) : abstraction =
     let (x, e1, e2) = a in
     (x, convert_parse_abstract e1.data, convert_parse_abstract e2.data)
-
-  and convert_sys sys =
-    match sys with
-    | [] -> []
-    | m::ms ->
-      let a, t = m.cofibration, m.expression in
-      { cofibration = a; expression = convert_parse_abstract t.data}::(convert_sys ms)
-
 
 let make_nowhere (e : CSyntax.expr') =
   {Util.Naming.data = e; loc = Util.Naming.nowhere}
@@ -137,9 +129,9 @@ let rec convert_abstract_parse (e : Ast.expr ) : CSyntax.expr' =
   | InP(alpha, a) -> InP(alpha, f a)
   | OutP(e1) -> OutP(f e1)
   | OutB(e1) -> OutB(f e1)
-  | Bound(ty, sys) -> Bound(f ty, convert_sys sys)
-  | InB(ty, sys, a) -> InB(f ty, convert_sys sys, f a)
-  | Branch(sys) -> Branch (convert_sys sys)
+  | Bound(ty, cof, t) -> Bound(f ty, cof, f t)
+  | InB(ty, cof, t, a) -> InB(f ty, cof, f t, f a)
+  | Branch(a, b, t, u) -> Branch (a, b, f t , f u)
   | Uip(uni, ty, x, eq) -> Uip(f uni, f ty, x, f eq)
   | IApp(e1, e2) -> IApp(f e1, e2)
   | CMap(x, e1) -> CMap(x, f e1)
@@ -148,10 +140,3 @@ let rec convert_abstract_parse (e : Ast.expr ) : CSyntax.expr' =
   and convert_abs (a : Ast.abstraction) : CSyntax.abstraction =
       let x, e1, e2 = a in
       (x, make_nowhere (convert_abstract_parse e1), make_nowhere (convert_abstract_parse e2))
-
-  and convert_sys sys =
-    match sys with
-    | [] -> []
-    | m::ms ->
-      let a, t = m.cofibration, m.expression in
-      { cofibration = a; expression = make_nowhere (convert_abstract_parse t)}::(convert_sys ms)

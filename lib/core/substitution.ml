@@ -95,9 +95,9 @@ let rec subst (s : substitution) (e : expr) : Ast.expr =
   | InP(alpha, e) -> InP(subst_cofib s alpha, subst s e)
   | OutP e -> OutP(subst s e)
   | OutB e -> OutB(subst s e)
-  | Bound(a, systems) -> Bound(subst s a, subst_systems s systems)
-  | InB(a_ty, sys,  a) -> InB(subst s a_ty, subst_systems s sys, subst s a)
-  | Branch sys -> Branch (subst_systems  s sys)
+  | Bound(a, cof, t) -> Bound(subst s a, subst_cofib s cof, subst s t)
+  | InB(a_ty, cof, t,  a) -> InB(subst s a_ty, subst_cofib s cof, subst s t, subst s a)
+  | Branch(a, b, t, u) -> Branch (a, b, t, u)
   | Uip(uni, ty, x, eq) ->
     let x' = fresh_var x in
     Uip(uni, subst s ty, x', subst s eq)
@@ -105,9 +105,3 @@ and subst_abs (s : substitution) (e : abstraction) : abstraction =
   let v, e1, e2 = e in
   let v' = fresh_var v in
   (v', subst s e1, subst ((v, Ex(Var v'))::s) e2)
-and subst_systems (s : substitution) (l : system list) : system list =
-  match l with
-  | [] -> []
-  | m::ms ->
-    let a, t = subst_cofib s m.cofibration, subst s m.expression in
-    (Ast.mk_sys a t)::(subst_systems s ms)

@@ -1,5 +1,0 @@
-(tests
- (names type_test eval_test precon_test)
- (modules type_test eval_test utilities precon_test)
- (libraries ounit2 core)
-)

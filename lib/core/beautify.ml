@@ -56,27 +56,21 @@ let rec occurs (x : variable) (e : expr) =
     | Partial(alpha, e1) | InP(alpha, e1) ->
       occurs_cofib x alpha || occurs x e1
     | OutP(e1) | OutB(e1) -> occurs x e1
-    | Bound(e1, sys) -> occurs x e1 || occurs_sys x sys
-    | InB(_, _ , e3) -> occurs x e3
-    | Branch sys -> occurs_sys x sys
+    | Bound(ty, cof, t) -> occurs x ty || occurs_cofib x cof || occurs x t
+    | InB(_, _ , _, e3) -> occurs x e3
+    | Branch(a, b, t, u) -> occurs_cofib x a || occurs_cofib x b || occurs x t || occurs x u
     | Uip(_, ty, p, eq) -> occurs x ty || occurs x (Var p) || occurs x eq
 and occurs_cofib (x : variable) (alpha : Cof.cofib) : bool =
     List.mem (x) (Cof.interval_variables(alpha)) || List.mem (x) (Cof.formula_params alpha)
 and occurs_interval (x : variable) (t : Cof.interval) : bool =
     List.mem (x) (Cof.term_variables t [])
-and occurs_sys (x) (sys) : bool =
-    match sys with
-    | [] -> false
-    | m::ms ->
-      let a, t = m.cofibration, m.expression in
-      occurs_cofib x a || occurs x t || occurs_sys x ms
-
-(** Rename bound variables in the given expression for the purposes of
-    pretty printing. *)
 let sbst_check (sbst : substitution) (x : variable) : variable =
   (match (List.assoc_opt x sbst) with
         | Some(Ex (Var y)) ->  y
         | _ ->  x)
+
+ (** Rename bound variables in the given expression for the purposes of
+    pretty printing. *)
 
 let beautify_cofib (s : substitution) (x : variable ) (f : Cof.cofib) : variable * Cof.cofib =
   let y =
@@ -135,9 +129,9 @@ let beautify =
       | InP(alpha, e1) -> InP(alpha, beautify sbst e1)
       | OutP(e1) -> OutP(beautify sbst e1)
       | OutB(e1) -> OutB(beautify sbst e1)
-      | Bound(e1, sys) -> Bound(beautify sbst e1, beautify_systems sbst sys)
-      | InB(e1, sys, e3) -> InB(beautify sbst e1, beautify_systems sbst sys,  beautify sbst e3)
-      | Branch sys -> Branch (beautify_systems sbst sys)
+      | Bound(e1, cof, t) -> Bound(beautify sbst e1, cof, beautify sbst t)
+      | InB(ty, cof, t, a) -> InB(beautify sbst ty, cof, beautify sbst t,  beautify sbst a)
+      | Branch(a, b, t, u) -> Branch (a, b, beautify sbst t, beautify sbst u)
       | Uip(uni, ty, p, eq) -> Uip(beautify sbst uni, beautify sbst ty, sbst_check sbst p, beautify sbst eq)
       | IApp(e1, e2) -> IApp(beautify sbst e1, e2)
       | CApp(e1, e2) -> CApp(beautify sbst e1, e2)
@@ -156,14 +150,7 @@ let beautify =
       else Dummy
     in
       (y, e1, beautify ((x, Ex(Var y)) :: sbst) e2)
-
-    and beautify_systems sbst sys =
-      match sys with
-      | [] -> []
-      | m::ms ->
-        let a, t = m.cofibration, m.expression in
-        (Ast.mk_sys a (beautify sbst t))::(beautify_systems sbst ms)
-  in
+ in
     beautify []
 
 
