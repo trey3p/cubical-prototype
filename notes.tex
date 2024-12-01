@@ -1,0 +1,78 @@
+\documentclass{article}
+\author{Trey Plante}
+
+
+\title{Notes}
+
+\usepackage[normalem]{ulem}
+\usepackage{ebproof}
+\usepackage{amsmath,amsthm,amssymb,stmaryrd}
+\usepackage[alphabetic]{amsrefs}
+\usepackage{hyperref, cleveref}
+\usepackage[inline]{enumitem}
+\usepackage{mathtools}
+
+\input{macros.tex}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{The type theory}
+
+The type theory is a two-level type theory, meaning it contains two notions of equality.
+
+\section{Algorithmic Definitions}
+
+We present an algorithmic procedure for deciding the judgments of the type theory.
+
+\begin{definition}
+  Head reduction is defined as follows:
+
+  \[
+    \begin{array}{lr}
+      \Gamma \triangleright (\lambda x. e)f \rightarrow e[f/x] \\
+      \Gamma \triangleright ef \to e'f \qquad \text{ if } \Gamma \triangleright e \to e' \\
+      \Gamma \triangleright [\alpha \to e, \beta \to f] \rightarrow e \qquad \text{ if } \Gamma \vdash \alpha\\
+      \Gamma \triangleright [\alpha \to e, \beta \to e] \rightarrow f \qquad \text{ if } \Gamma \vdash \beta\\
+      \Gamma \triangleright \outB(a) \rightarrow t \qquad \text{ if } \Gamma \triangleright a \uparrow A[\psi \to t] \text{ and } \Gamma \vdash \psi \\
+      \Gamma \triangleright \outB(in(a)) \rightarrow a \\
+      \Gamma \triangleright \outB(a) \rightarrow a' \qquad \text{ if } \Gamma \triangleright a \rightarrow a' \\
+      \Gamma \triangleright \outP(in(a)) \rightarrow a \\
+      \Gamma \triangleright \outP(a) \rightarrow a' \qquad \text{ if  } \Gamma \triangleright a \rightarrow a'\\
+    \end{array}
+  \]
+\end{definition}
+
+
+\begin{definition}
+  Term equivalence is defined as follows:
+
+  \[
+    \begin{array}{lr}
+      \Gamma \triangleright M \Leftrightarrow N : A[\psi \to t] \qquad \text{ if } \Gamma \triangleright \outB(M) \Leftrightarrow \outB(N) : A\\
+      \Gamma \triangleright M \Leftrightarrow N : [\alpha] \to A \qquad \text{ if } \Gamma, \alpha \triangleright \outP(M) \Leftrightarrow \outP(N) : A\\
+      \Gamma \triangleright M \Leftrightarrow N : (x : \mathbb{I}) \to A \qquad \text{ if } \Gamma, x : \mathbb{I} \triangleright M x \Leftrightarrow N x : A(x)\\
+      \Gamma \triangleright M \Leftrightarrow N : (x : \cof) \to A \qquad \text{ if } \Gamma, x : \cof \triangleright M x \Leftrightarrow N x : A(x)\\
+    \end{array}
+  \]
+\end{definition}
+
+\begin{definition}
+  Neutral equivalence is defined as follows:
+
+  \[
+    \begin{array}{lr}
+      \Gamma \triangleright [\alpha \to p_{1}, \beta \to p_{2}] \leftrightarrow q \uparrow A \qquad \text{ if } \Gamma, \alpha \triangleright p_{1} \Leftrightarrow q : A \text{ and } \Gamma, \beta \triangleright p_{2} \Leftrightarrow q : A \\
+
+      \Gamma \triangleright p \leftrightarrow [\alpha \to q_{1}, \beta \to q_{2}] \uparrow A \qquad \text{ if } \Gamma, \alpha \triangleright p \Leftrightarrow q_{1} : A \text{ and } \Gamma, \beta \triangleright p \Leftrightarrow q_{2} : A \\
+
+      \Gamma \triangleright \outB(p) \Leftrightarrow \outB(q) \uparrow A \qquad \text{ if } \Gamma \triangleright p \leftrightarrow q \uparrow A[\psi \to t]\\
+
+      \Gamma \triangleright \outP(p) \Leftrightarrow \outB(q) \uparrow A \qquad \text{ if } \Gamma \triangleright p \leftrightarrow q \uparrow [\alpha] \to A\\
+
+    \end{array}
+  \]
+\end{definition}
+
+\end{document}
