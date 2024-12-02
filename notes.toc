@@ -1,2 +1,5 @@
 \contentsline {section}{\numberline {1}The type theory}{1}{section.1}%
-\contentsline {section}{\numberline {2}Algorithmic Definitions}{1}{section.2}%
+\contentsline {subsection}{\numberline {1.1}UIP Layer}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Cubical Layer}{1}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Equational Theory}{2}{section.2}%
+\contentsline {section}{\numberline {3}Algorithmic Definitions}{2}{section.3}%

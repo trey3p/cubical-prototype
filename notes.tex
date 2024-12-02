@@ -22,6 +22,142 @@
 
 The type theory is a two-level type theory, meaning it contains two notions of equality.
 
+\subsection{UIP Layer}
+
+\subsection{Cubical Layer}
+
+The cubical type theory is parameterized by a rich cofibration logic with the interval structure being that of a distributive lattice.
+
+cofibration specification ...
+
+\begin{definition}
+  Partial types are defined by the following rules:
+
+
+    \[\begin{prooftree}
+        \hypo{\Gamma \vdash \A : \sU_{l}}
+        \infer1[form]{\Gamma \vdash [\alpha] \to A}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+        \hypo{\Gamma ,\alpha \vdash a : A}
+        \infer1[intro]{\Gamma \vdash \inb(f) : [\alpha] \to \A}
+      \end{prooftree}
+    \]
+    \[
+      \begin{prooftree}
+        \hypo{\Gamma \vdash f : [\alpha] \to A}
+        \infer1[elim]{\Gamma \vdash \outb(f) : A}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+        \hypo{\Gamma \vdash f : [\alpha] \to \A}
+        \infer1[comp]{\Gamma \vdash \outb(f) \equiv a}
+    \end{prooftree}
+  \]
+\end{definition}
+
+
+\begin{definition}
+  Extension types are defined by the following rules:
+
+  \[
+     \begin{prooftree}
+            \hypo{\Gamma \vdash A : \sU_l} \hypo{\Gamma \vdash \psi \cof} \hypo{\Gamma \vdash t : [\psi] \to \A}
+            \infer3[form]{\Gamma \vdash \A[\psi \to t]}
+        \end{prooftree}
+  \]
+  \[
+     \begin{prooftree}
+            \hypo{\Gamma \vdash a : \A}
+            \hypo{\Gamma \vdash \psi \cof}
+            \hypo{\Gamma, \psi \vdash t : \A}
+            \hypo{\Gamma, \psi \vdash t \equiv a}
+            \infer4[intro]{\Gamma \vdash \inb(a) : \A[\psi \to t]}
+        \end{prooftree}
+      \]
+  \[
+        \begin{prooftree}
+            \hypo{\Gamma \vdash a : \A[\psi \to t]}
+            \infer1[elim]{\Gamma \vdash \outb(a) : \A}
+        \end{prooftree}
+        \quad
+        \begin{prooftree}
+             \hypo{\Gamma \vdash a : A[\psi \to t]}
+             \hypo{\Gamma \vdash \psi}
+            \infer2[comp1]{\Gamma \vdash \outb(a) \equiv t}
+        \end{prooftree}
+        \quad
+        \begin{prooftree}
+            \hypo{\Gamma \vdash a : A}
+            \infer1[comp2]{\Gamma \vdash \outb(\inb(a)) \equiv a}
+        \end{prooftree}
+  \]
+
+\end{definition}
+
+\begin{definition}
+  The elimination form of disjunctions is introduced as follows:
+
+
+      \begin{prooftree}
+            \hypo{\Gamma \vdash A : \sU_{l}} \hypo{\Gamma \vdash_{\bPsi} \alpha \lor \beta} \hypo{\Gamma, \alpha \vdash e_{1} : A} \hypo{\Gamma, \beta \vdash e_{2} : A}
+            \hypo{\Gamma, \alpha, \beta \vdash e \equiv f : A}
+            \infer5[intro]{\Gamma \vdash [e_{1}, e_{2}]_{\alpha, \beta} : A}
+    \end{prooftree}
+
+\end{definition}
+
+
+\section{Equational Theory}
+
+
+\begin{definition}
+  The equational theory of disjunctions is as follows:
+
+  \[
+    \begin{prooftree}
+            \hypo{\Gamma \vdash \alpha}
+            \infer1[comp1]{\Gamma \vdash [e_{1}, e_{2}]_{\alpha, \beta} \equiv e_{1}}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+        \hypo{\Gamma \vdash \beta}
+        \infer1[comp2]{\Gamma \vdash [e_{1}, e_{2}]_{\alpha, \beta} \equiv e_{2}}
+    \end{prooftree}
+  \]
+  \[
+      \begin{prooftree}
+        \hypo{\Gamma_{\bPsi} \vdash \alpha \lor \beta}
+        \hypo{\Gamma, \alpha \vdash e \equiv f : A}
+        \hypo{\Gamma, \beta \vdash e \equiv f : A}
+        \infer3[ext]{\Gamma \vdash e \equiv f : A}
+    \end{prooftree}
+    \quad
+    \begin{prooftree}
+        \hypo{\Gamma_{\bPsi} \vdash \alpha \lor \beta}
+        \hypo{\Gamma \vdash e : A}
+        \infer2[eta]{e \equiv [e, e]_{\alpha, \beta} : A}
+    \end{prooftree}
+  \]
+  \[
+    \begin{prooftree}
+        \hypo{\Gamma \vdash \alpha \Leftrightarrow \gamma}
+        \hypo{\Gamma \vdash \beta \Leftrightarrow \delta}
+        \hypo{\Gamma, \alpha \vdash e_{1} \equiv f_{1} : A}
+        \hypo{\Gamma, \beta \vdash e_{2} \equiv f_{2} : A}
+        \infer4[cong]{\Gamma \vdash [e_{1}, e_2]_{\alpha, \beta} \equiv [f_{1}, f_{2}]_{\gamma, \delta} : A}
+    \end{prooftree}
+  \]
+
+
+
+\end{definition}
+
+
+
+
+
 \section{Algorithmic Definitions}
 
 We present an algorithmic procedure for deciding the judgments of the type theory.
@@ -35,11 +171,11 @@ We present an algorithmic procedure for deciding the judgments of the type theor
       \Gamma \triangleright ef \to e'f \qquad \text{ if } \Gamma \triangleright e \to e' \\
       \Gamma \triangleright [\alpha \to e, \beta \to f] \rightarrow e \qquad \text{ if } \Gamma \vdash \alpha\\
       \Gamma \triangleright [\alpha \to e, \beta \to e] \rightarrow f \qquad \text{ if } \Gamma \vdash \beta\\
-      \Gamma \triangleright \outB(a) \rightarrow t \qquad \text{ if } \Gamma \triangleright a \uparrow A[\psi \to t] \text{ and } \Gamma \vdash \psi \\
-      \Gamma \triangleright \outB(in(a)) \rightarrow a \\
-      \Gamma \triangleright \outB(a) \rightarrow a' \qquad \text{ if } \Gamma \triangleright a \rightarrow a' \\
-      \Gamma \triangleright \outP(in(a)) \rightarrow a \\
-      \Gamma \triangleright \outP(a) \rightarrow a' \qquad \text{ if  } \Gamma \triangleright a \rightarrow a'\\
+      \Gamma \triangleright \outb(a) \rightarrow t \qquad \text{ if } \Gamma \triangleright a \uparrow A[\psi \to t] \text{ and } \Gamma \vdash \psi \\
+      \Gamma \triangleright \outb(in(a)) \rightarrow a \\
+      \Gamma \triangleright \outb(a) \rightarrow a' \qquad \text{ if } \Gamma \triangleright a \rightarrow a' \\
+      \Gamma \triangleright \outp(in(a)) \rightarrow a \\
+      \Gamma \triangleright \outp(a) \rightarrow a' \qquad \text{ if  } \Gamma \triangleright a \rightarrow a'\\
     \end{array}
   \]
 \end{definition}
@@ -50,8 +186,8 @@ We present an algorithmic procedure for deciding the judgments of the type theor
 
   \[
     \begin{array}{lr}
-      \Gamma \triangleright M \Leftrightarrow N : A[\psi \to t] \qquad \text{ if } \Gamma \triangleright \outB(M) \Leftrightarrow \outB(N) : A\\
-      \Gamma \triangleright M \Leftrightarrow N : [\alpha] \to A \qquad \text{ if } \Gamma, \alpha \triangleright \outP(M) \Leftrightarrow \outP(N) : A\\
+      \Gamma \triangleright M \Leftrightarrow N : A[\psi \to t] \qquad \text{ if } \Gamma \triangleright \outb(M) \Leftrightarrow \outb(N) : A\\
+      \Gamma \triangleright M \Leftrightarrow N : [\alpha] \to A \qquad \text{ if } \Gamma, \alpha \triangleright \outp(M) \Leftrightarrow \outp(N) : A\\
       \Gamma \triangleright M \Leftrightarrow N : (x : \mathbb{I}) \to A \qquad \text{ if } \Gamma, x : \mathbb{I} \triangleright M x \Leftrightarrow N x : A(x)\\
       \Gamma \triangleright M \Leftrightarrow N : (x : \cof) \to A \qquad \text{ if } \Gamma, x : \cof \triangleright M x \Leftrightarrow N x : A(x)\\
     \end{array}
@@ -67,9 +203,9 @@ We present an algorithmic procedure for deciding the judgments of the type theor
 
       \Gamma \triangleright p \leftrightarrow [\alpha \to q_{1}, \beta \to q_{2}] \uparrow A \qquad \text{ if } \Gamma, \alpha \triangleright p \Leftrightarrow q_{1} : A \text{ and } \Gamma, \beta \triangleright p \Leftrightarrow q_{2} : A \\
 
-      \Gamma \triangleright \outB(p) \Leftrightarrow \outB(q) \uparrow A \qquad \text{ if } \Gamma \triangleright p \leftrightarrow q \uparrow A[\psi \to t]\\
+      \Gamma \triangleright \outb(p) \Leftrightarrow \outb(q) \uparrow A \qquad \text{ if } \Gamma \triangleright p \leftrightarrow q \uparrow A[\psi \to t]\\
 
-      \Gamma \triangleright \outP(p) \Leftrightarrow \outB(q) \uparrow A \qquad \text{ if } \Gamma \triangleright p \leftrightarrow q \uparrow [\alpha] \to A\\
+      \Gamma \triangleright \outp(p) \Leftrightarrow \outb(q) \uparrow A \qquad \text{ if } \Gamma \triangleright p \leftrightarrow q \uparrow [\alpha] \to A\\
 
     \end{array}
   \]
